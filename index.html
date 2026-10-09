@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f2">
+  <meta name="description" content="Paste your words and listen with OpenRouter. No installation needed.">
+  <title>Speechy — Your words, out loud</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%237562d9'/%3E%3Cpath d='M12 17v6M20 11v18M28 15v10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>:root { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #2c2b35; background: #f7f6f2; font-synthesis: none; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-weight: 400; font-size: 15px; --purple: #7562d9; --ink: #2c2b35; --muted: #777080; --border: #e9e7e3; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, textarea, select { font: inherit; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+a { color: inherit; text-decoration: none; }
+button:focus-visible, a:focus-visible { outline: 3px solid #baafea; outline-offset: 4px; }
+.app-shell { width: min(1160px, calc(100% - 96px)); margin: 0 auto; }
+.site-header { height: 108px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e9e7e1; }
+.brand { font-family: system-ui, sans-serif; font-weight: 800; font-size: 29px; letter-spacing: -1.6px; display: inline-flex; align-items: center; gap: 10px; }
+.brand-dot { color: var(--purple); }
+.brand-mark { color: white; background: var(--purple); display: grid; place-items: center; width: 35px; height: 35px; border-radius: 11px; box-shadow: 0 3px 5px #7562d918; }
+.header-note { font-size: 12px; color: #736c7d; display: flex; align-items: center; gap: 8px; }
+.status-dot { width: 6px; height: 6px; background: #8fa99c; border-radius: 50%; }
+.intro { padding: 53px 0 38px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #756394; letter-spacing: 1.8px; font-size: 11px; font-weight: 650; margin-bottom: 19px; }
+h1 { font-family: system-ui, sans-serif; font-size: clamp(34px, 4.2vw, 47px); line-height: 1.21; letter-spacing: -2px; font-weight: 750; margin: 0; }
+h1 span { color: var(--purple); }
+.intro > p { color: #716979; font-size: 15px; margin: 17px 0 0; letter-spacing: -.15px; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 336px; gap: 24px; align-items: start; }
+.editor-card, .settings-card { background: #fff; border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 3px 7px #28201b03, 0 12px 24px #28201b02; }
+.editor-topbar { min-height: 75px; display: flex; align-items: center; justify-content: space-between; margin: 0 27px; border-bottom: 1px solid #f0eef1; gap: 12px; }
+.editor-heading, .settings-heading { display: flex; gap: 11px; align-items: center; }
+.section-number { color: #7f748d; font-size: 11px; font-weight: 500; letter-spacing: 1px; }
+h2 { font-size: 14px; font-weight: 650; margin: 0; letter-spacing: -.15px; }
+.editor-actions { display: flex; gap: 14px; align-items: center; }
+.text-button { padding: 5px 0; background: none; border: 0; color: #777080; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: color .15s; }
+.text-button:hover { color: var(--purple); }
+.sample-button { color: #7c65a9; }
+.clear-button:disabled { opacity: .4; }
+.action-divider { height: 12px; width: 1px; background: #ece9f0; }
+.text-pad { display: block; width: 100%; height: 338px; min-height: 260px; resize: vertical; padding: 27px 29px 23px; border: 0; background: transparent; color: #514e5c; font-size: 16px; line-height: 1.8; letter-spacing: -.12px; outline: none; }
+.text-pad::placeholder { color: #7d7487; opacity: 1; }
+.text-pad:focus { background: #fefdfd; box-shadow: inset 3px 0 #ddd4fa; }
+.editor-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 15px 28px 18px; color: #7a7281; font-size: 11px; }
+.count-separator { margin: 0 9px; color: #c1bdc6; }
+.draft-note { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #7c7484; }
+.draft-note svg { color: #a0afa5; }
+.player-panel { background: #faf9fc; border-top: 1px solid #eeeaf3; border-radius: 0 0 17px 17px; padding: 23px 27px; min-height: 98px; display: flex; align-items: center; gap: 13px; }
+.empty-player-icon, .player-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: #efebf8; color: #a494c9; flex-shrink: 0; }
+.empty-player-copy h3, .player-heading h3 { font-size: 12px; font-weight: 500; color: #716779; margin: 0 0 5px; }
+.empty-player-copy p, .player-heading p { font-size: 11px; color: #7b7185; margin: 0; }
+.waveform { margin-left: auto; display: flex; gap: 3px; align-items: center; justify-content: center; height: 55px; overflow: hidden; opacity: .62; }
+.waveform span { width: 3px; border-radius: 4px; background: #d9d1ee; transform: scaleY(.53); flex-shrink: 0; }
+.has-audio { display: block; padding-top: 19px; padding-bottom: 18px; }
+.player-heading { display: flex; gap: 11px; align-items: center; }
+.player-heading h3 { color: #716686; font-weight: 650; }
+.player-heading p { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.download-button { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 11px; color: #74619d; padding: 8px 0 8px 8px; }
+.download-button:hover { color: #5944b6; }
+audio { display: block; width: 100%; height: 36px; margin-top: 15px; border-radius: 20px; }
+.settings-card { padding: 28px 25px 24px; }
+.settings-heading { margin-bottom: 27px; gap: 9px; }
+.settings-heading h2 { font-size: 13px; }
+.field { margin-bottom: 21px; }
+.field label { font-size: 12px; color: #5f586a; font-weight: 550; display: block; margin-bottom: 9px; }
+input, select { height: 43px; width: 100%; border: 1px solid #e8e4ed; border-radius: 7px; color: #736b81; font-size: 12px; background: #fff; padding: 0 11px; outline: none; transition: border-color .15s, box-shadow .15s; }
+input::placeholder { color: #7d7487; }
+input:focus, select:focus { border-color: #ac9de2; box-shadow: 0 0 0 3px #b9aee61b; }
+select { padding-right: 30px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239f96ae' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-position: right 12px center; background-repeat: no-repeat; text-overflow: ellipsis; }
+select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
+.input-with-action { position: relative; }
+.input-with-action input { padding-right: 40px; font-size: 12px; letter-spacing: .5px; }
+.icon-button { position: absolute; right: 4px; top: 4px; display: grid; place-items: center; height: 35px; width: 35px; border: 0; border-radius: 5px; background: none; color: #a69caf; }
+.icon-button:hover { background: #f4f0fa; color: #83729f; }
+.field-help { font-size: 11px; line-height: 1.65; color: #7b7185; margin: 7px 0 0; display: flex; align-items: center; gap: 4px; }
+.field-label-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.small-link { background: none; border: 0; padding: 0; font-size: 11px; color: #7a659e; display: inline-flex; align-items: center; gap: 4px; line-height: 1.6; }
+.small-link:hover { color: #614bb2; text-decoration: underline; }
+.small-link:disabled { opacity: .5; }
+.model-help { margin-top: 8px; display: block; }
+.voice-field { margin-bottom: 25px; }
+.catalog-error { padding: 9px 11px; border: 1px solid #f0d9ce; background: #fff8f4; border-radius: 7px; margin-top: 9px; }
+.catalog-error p { margin: 0 0 6px; font-size: 11px; line-height: 1.6; color: #966652; overflow-wrap: anywhere; }
+.catalog-error > div { display: flex; gap: 14px; }
+.generation-area { border-top: 1px solid #efebf3; padding-top: 22px; }
+.generate-button { width: 100%; border: 1px solid #7562d9; color: #fff; background: var(--purple); height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; font-weight: 550; box-shadow: 0 3px 6px #7562d91a; transition: background .15s, transform .15s, box-shadow .15s; }
+.generate-button > svg:last-child { margin-left: auto; }
+.generate-button > svg:first-child { margin-right: 0; }
+.generate-button > span:not(.spinner) { flex: 1; text-align: left; }
+.generate-button { padding: 0 17px; }
+.generate-button:hover:not(:disabled) { background: #6955ca; box-shadow: 0 4px 9px #7562d92e; transform: translateY(-1px); }
+.generate-button:active:not(:disabled) { transform: translateY(0); }
+.generate-button:disabled { background: #8e7be2; border-color: #8e7be2; }
+.generation-note { text-align: center; font-size: 11px; margin: 11px 0 0; color: #7b7185; }
+.cancel-button { display: flex; margin: 8px auto 0; color: #7a6b89; font-size: 11px; }
+.generation-error { font-size: 11px; color: #a35d59; line-height: 1.7; padding: 11px; border: 1px solid #f1dcd9; border-radius: 7px; background: #fff7f5; margin-top: 13px; overflow-wrap: anywhere; }
+.generation-status { font-size: 11px; color: #7b688f; line-height: 1.65; text-align: center; margin: 0; }
+.generation-status.visible, .generate-button:disabled ~ .generation-status { margin-top: 10px; }
+.spinner { border: 2px solid #ffffff50; border-top-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.below-workspace { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 19px 3px; }
+.below-workspace p { display: inline-flex; align-items: center; gap: 6px; color: #7c7484; font-size: 11px; margin: 0; line-height: 1.6; }
+.below-workspace p svg { flex-shrink: 0; color: #aaa2b4; }
+.below-workspace > span { color: #7c7484; font-size: 11px; font-style: italic; white-space: nowrap; }
+.site-footer { margin-top: 41px; padding: 22px 0 25px; border-top: 1px solid #e9e7e1; display: flex; align-items: center; justify-content: space-between; color: #7c7484; font-size: 11px; }
+.site-footer a { color: #76648f; display: inline-flex; align-items: center; gap: 5px; }
+.site-footer a:hover { color: #65529e; }
+.external-arrow { transform: rotate(-45deg); flex-shrink: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media (min-width: 1440px) { .app-shell { width: 1160px; } .intro { padding-top: 62px; padding-bottom: 42px; } .site-header { height: 114px; } .text-pad { height: 356px; } }
+@media (max-width: 1000px) { .app-shell { width: calc(100% - 56px); } .workspace { grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; } .settings-card { padding: 26px 20px 22px; } .editor-topbar { margin: 0 22px; } .text-pad { padding-left: 24px; padding-right: 24px; } .editor-footer { padding-left: 22px; padding-right: 22px; flex-wrap: wrap; } .player-panel { padding-left: 22px; padding-right: 22px; } .waveform { display: none; } .editor-actions { gap: 9px; } .text-button { font-size: 11px; } }
+@media (max-width: 760px) { .app-shell { width: min(620px, calc(100% - 36px)); } .site-header { height: 84px; } .brand { font-size: 26px; } .brand-mark { width: 32px; height: 32px; border-radius: 10px; } .header-note { font-size: 11px; } .intro { padding: 38px 0 30px; } h1 { font-size: 38px; letter-spacing: -1.6px; } .intro > p { font-size: 13px; margin-top: 14px; } .eyebrow { letter-spacing: 1.5px; margin-bottom: 15px; } .workspace { grid-template-columns: 1fr; gap: 20px; } .text-pad { height: 300px; } .settings-card { padding: 25px; } .settings-heading { margin-bottom: 24px; } .settings-heading h2 { font-size: 14px; } .settings-card .field label { font-size: 12px; } .field { margin-bottom: 20px; } .field input, .field select { height: 46px; font-size: 13px; } .input-with-action .icon-button { top: 5px; right: 5px; } .generate-button { font-size: 13px; height: 50px; } .waveform { display: flex; } .below-workspace { align-items: flex-start; padding: 18px 0; } .below-workspace > span { display: none; } .site-footer { margin-top: 20px; } }
+@media (max-width: 420px) { .app-shell { width: calc(100% - 28px); } .header-note { display: none; } .brand { font-size: 25px; gap: 7px; } h1 { font-size: 31px; letter-spacing: -1.3px; } .intro > p { font-size: 13px; max-width: 290px; line-height: 1.6; } .eyebrow { font-size: 10px; letter-spacing: 1.25px; } .editor-topbar { margin: 0 17px; min-height: 67px; } .editor-actions { gap: 8px; } .editor-heading { gap: 7px; } h2 { font-size: 13px; } .sample-button { gap: 4px; } .sample-button svg { width: 13px; } .action-divider { display: none; } .text-pad { padding: 22px 18px; font-size: 14px; height: 270px; } .editor-footer { padding: 13px 17px; align-items: flex-start; } .count-separator { margin: 0 5px; } .player-panel { padding: 20px 17px; gap: 10px; } .empty-player-copy h3 { font-size: 12px; } .waveform { display: none; } .settings-card { padding: 23px 20px; } .download-button { gap: 4px; } .player-heading p { max-width: 150px; } .site-footer { gap: 10px; align-items: flex-start; } .site-footer > span { max-width: 150px; line-height: 1.6; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+[hidden] { display:none !important; }
+.player-heading > div:nth-child(2) { min-width:0; }
+#clip-model { overflow-wrap:anywhere; white-space:normal; }
+</style>
+</head>
+<body>
+  <svg class="sr-only" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="sound-icon" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
+    <symbol id="headphones-icon" viewBox="0 0 24 24"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></symbol>
+    <symbol id="arrow-icon" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="eye-icon" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="download-icon" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  </defs></svg>
+  <div class="app-shell">
+    <header class="site-header"><div class="brand"><span class="brand-mark"><svg width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><use href="#sound-icon"/></svg></span><span>speechy<span class="brand-dot">.</span></span></div><span class="header-note"><span class="status-dot"></span>A little space to listen</span></header>
+    <main>
+      <section class="intro" aria-labelledby="page-title"><div class="eyebrow"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg>LESS READING. MORE LISTENING.</div><h1 id="page-title">Turn words into<br><span>something you can hear.</span></h1><p>Paste your text, pick a voice, and give your eyes a break.</p></section>
+      <form class="workspace" id="speech-form" novalidate>
+        <section class="editor-card" aria-labelledby="editor-title">
+          <div class="editor-topbar"><div class="editor-heading"><span class="section-number">01</span><h2 id="editor-title">Your text</h2></div><div class="editor-actions"><button class="text-button sample-button" type="button" id="sample">Try a sample</button><span class="action-divider"></span><button class="text-button clear-button" type="button" id="clear" disabled>Clear</button></div></div>
+          <label class="sr-only" for="source-text">Text to turn into speech</label><textarea class="text-pad" id="source-text" placeholder="A story. An article. That long email.&#10;&#10;Paste anything you’d like to listen to…" spellcheck="true"></textarea>
+          <div class="editor-footer"><span id="counts">0 words · 0 characters</span><span class="draft-note" id="draft-status">Draft saved on this device</span></div>
+          <div class="player-panel" id="player-panel">
+            <div class="empty-player-icon" id="empty-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg></div><div class="empty-player-copy" id="empty-copy"><h3>A little listening goes a long way.</h3><p>Your audio will appear here, ready to play.</p></div><div class="waveform" id="empty-wave" aria-hidden="true"><span style="height:12px"></span><span style="height:20px"></span><span style="height:15px"></span><span style="height:32px"></span><span style="height:23px"></span><span style="height:39px"></span><span style="height:26px"></span><span style="height:18px"></span><span style="height:29px"></span><span style="height:19px"></span><span style="height:12px"></span></div>
+            <div id="audio-player" hidden><div class="player-heading"><span class="player-icon"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg></span><div><h3>Your audio is ready</h3><p id="clip-model"></p></div><a class="download-button" id="download-audio" aria-label="Download generated audio"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#download-icon"/></svg><span>Download</span></a></div><audio id="audio" controls aria-label="Generated speech"></audio></div>
+          </div>
+        </section>
+        <aside class="settings-card" aria-labelledby="settings-title">
+          <div class="settings-heading"><span class="section-number">02</span><h2 id="settings-title">Make it sound like you</h2></div>
+          <div class="field api-key-field"><label for="api-key">OpenRouter API key</label><div class="input-with-action"><input id="api-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false" aria-describedby="key-help"><button type="button" class="icon-button" id="show-key" aria-label="Show API key" aria-pressed="false"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#eye-icon"/></svg></button></div><p id="key-help" class="field-help">Used for this session. Never saved.</p></div>
+          <div class="field"><div class="field-label-row"><label for="speech-model">Speech model</label><button type="button" class="small-link" id="toggle-custom">Use model ID</button></div><select id="speech-model" disabled><option value="">Finding speech models…</option></select><div id="custom-model-field" hidden><label class="sr-only" for="custom-model">Model ID</label><input id="custom-model" placeholder="provider/text-to-speech-model" autocomplete="off" spellcheck="false"></div><div class="catalog-error" id="catalog-error" role="status" hidden><p id="catalog-message"></p><button type="button" class="small-link" id="retry-models">Retry</button></div><p class="field-help model-help">Choose a text-to-speech model. Scribe transcribes audio.</p></div>
+          <div class="field voice-field"><label for="speech-voice">Voice</label><div id="voice-control"><input id="speech-voice" placeholder="Provider default" autocomplete="off" spellcheck="false"></div><p class="field-help" id="voice-help">Choose a voice for your words.</p></div>
+          <div class="generation-area"><button type="submit" class="generate-button" id="generate"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg><span id="generate-label">Generate speech</span><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#arrow-icon"/></svg></button><button type="button" class="text-button cancel-button" id="cancel" hidden>Cancel generation</button><p class="generation-note" id="usage-note">Uses your OpenRouter credits.</p><div class="generation-error" id="generation-error" role="alert" hidden></div><p class="generation-status" id="status" role="status" aria-live="polite"></p></div>
+        </aside>
+      </form>
+      <div class="below-workspace"><p>Your key stays in memory. Your text goes to OpenRouter only when you generate.</p><span>Words in. World out.</span></div>
+    </main>
+    <footer class="site-footer"><span>Open. Paste. Listen.</span><a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer">Get an OpenRouter key</a></footer>
+  </div>
+  <script>
+    // Speechy is a single file: no libraries, imports, or build step.
+    (() => {
+      'use strict';
+      const API = 'https://openrouter.ai/api/v1';
+      const DRAFT_KEY = 'speechy.draft';
+      const SAMPLE = 'Some days, the best way to find a little clarity is to slow down. Step away from the screen. Make a cup of tea. Let your thoughts settle.\n\nThere is no need to rush through every word. A good story, a new idea, or a note from a friend can be something you listen to, too. Take a breath, press play, and give your eyes a well-earned break.';
+      const $ = (id) => document.getElementById(id);
+      const textPad = $('source-text');
+      const modelSelect = $('speech-model');
+      const audio = $('audio');
+      let models = [], customMode = false, catalogLoading = false;
+      let catalogController = null, generationController = null;
+      let generationId = 0, busy = false, audioUrl = null;
+      const isRecord = (value) => typeof value === 'object' && value !== null;
+      const strings = (value) => Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.length) : [];
+      const isScribe = (model) => /(?:^|\/)scribe(?:[-_]|$)/i.test(model);
+
+      function updateDraft() {
+        const text = textPad.value;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        $('counts').textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words') + ' · ' + text.length.toLocaleString() + ' characters';
+        $('clear').disabled = !text;
+        try {
+          if (text) localStorage.setItem(DRAFT_KEY, text);
+          else localStorage.removeItem(DRAFT_KEY);
+          $('draft-status').textContent = 'Draft saved on this device';
+        } catch { $('draft-status').textContent = 'Draft saving unavailable'; }
+      }
+      function clearError() { $('generation-error').hidden = true; $('generation-error').textContent = ''; }
+      function showError(message) { $('generation-error').textContent = message; $('generation-error').hidden = false; }
+      function selectedModel() { return models.find((model) => model.id === modelSelect.value); }
+      function updateVoice() {
+        const voices = customMode ? [] : selectedModel()?.voices ?? [];
+        const control = document.createElement(voices.length ? 'select' : 'input');
+        control.id = 'speech-voice';
+        if (voices.length) {
+          for (const voice of voices) control.add(new Option(voice.charAt(0).toUpperCase() + voice.slice(1), voice));
+        } else { control.placeholder = 'Provider default'; control.autocomplete = 'off'; control.spellcheck = false; }
+        control.disabled = busy;
+        $('voice-control').replaceChildren(control);
+        $('voice-help').textContent = voices.length ? 'Find a voice you’ll want to keep listening to.' : 'Optional. Enter a voice supported by your model.';
+      }
+      function setBusy(value) {
+        busy = value;
+        $('generate').disabled = value;
+        $('generate-label').textContent = value ? 'Creating your audio…' : 'Generate speech';
+        $('cancel').hidden = !value;
+        $('usage-note').hidden = value;
+        modelSelect.disabled = value || catalogLoading || !models.length;
+        $('toggle-custom').disabled = value;
+        $('custom-model').disabled = value;
+        $('speech-voice').disabled = value;
+      }
+      async function request(url, options = {}) {
+        try { return await fetch(url, { ...options, credentials: 'omit', referrerPolicy: 'no-referrer' }); }
+        catch (error) {
+          if (options.signal?.aborted || error?.name === 'AbortError') throw error;
+          throw new Error('Could not reach OpenRouter. Check your internet connection and access to openrouter.ai.');
+        }
+      }
+      async function responseError(response, key = '') {
+        let detail = '';
+        try {
+          const body = await response.json();
+          if (isRecord(body)) {
+            if (isRecord(body.error) && typeof body.error.message === 'string') detail = body.error.message;
+            else if (typeof body.error === 'string') detail = body.error;
+            else if (typeof body.message === 'string') detail = body.message;
+          }
+        } catch { /* A proxy may return HTML; keep the status explanation. */ }
+        if (key) detail = detail.split(key).join('[redacted]');
+        detail = detail.replace(/sk-or-[A-Za-z0-9_-]+/g, '[redacted]').slice(0, 400);
+        const messages = {
+          400: 'OpenRouter could not use these settings. Check the model, voice, and text length.',
+          401: 'Your OpenRouter key was not accepted. Check the key and try again.',
+          402: 'Your OpenRouter account needs credits to generate speech.',
+          403: 'Access was denied. Check your key permissions and network access.',
+          404: 'This speech model is unavailable. Refresh the list or choose another model.',
+          413: 'This text is too long for the selected model. Try a shorter passage.',
+          429: 'OpenRouter is receiving too many requests. Wait a moment and try again.'
+        };
+        const message = response.ok ? 'OpenRouter returned an error instead of audio.' : messages[response.status] ?? ('OpenRouter could not complete the request (HTTP ' + response.status + '). Try again shortly.');
+        return new Error(detail ? message + ' ' + detail : message);
+      }
+      async function loadModels() {
+        catalogController?.abort();
+        const controller = new AbortController();
+        catalogController = controller;
+        catalogLoading = true;
+        $('catalog-error').hidden = true;
+        $('retry-models').disabled = true;
+        modelSelect.disabled = true;
+        if (!models.length) modelSelect.replaceChildren(new Option('Finding speech models…', ''));
+        try {
+          const response = await request(API + '/models?output_modalities=speech', { signal: controller.signal });
+          if (!response.ok) throw await responseError(response);
+          const body = await response.json();
+          if (!isRecord(body) || !Array.isArray(body.data)) throw new Error('OpenRouter returned an invalid model list. Please retry.');
+          const available = body.data.filter((item) => isRecord(item) && typeof item.id === 'string' && item.id && !isScribe(item.id) && isRecord(item.architecture) && strings(item.architecture.input_modalities).includes('text') && strings(item.architecture.output_modalities).includes('speech')).map((item) => ({ id: item.id, name: typeof item.name === 'string' && item.name ? item.name : item.id, voices: [...new Set(strings(item.supported_voices))] }));
+          available.sort((a, b) => Number(b.id.startsWith('elevenlabs/')) - Number(a.id.startsWith('elevenlabs/')));
+          if (!available.length) throw new Error('No text-to-speech models are available right now. Retry or use a supported model ID.');
+          if (controller.signal.aborted) return;
+          const previous = modelSelect.value;
+          models = available;
+          modelSelect.replaceChildren(...models.map((model) => new Option(model.name, model.id)));
+          modelSelect.value = models.some((model) => model.id === previous) ? previous : models[0].id;
+          if (!customMode) updateVoice();
+        } catch (error) {
+          if (controller.signal.aborted) return;
+          $('catalog-message').textContent = error instanceof SyntaxError ? 'OpenRouter returned an unreadable model list. Please retry.' : error.message || 'Could not load speech models.';
+          $('catalog-error').hidden = false;
+          if (!models.length) modelSelect.replaceChildren(new Option('Choose a model ID or retry', ''));
+        } finally {
+          if (!controller.signal.aborted) {
+            catalogLoading = false;
+            $('retry-models').disabled = false;
+            modelSelect.disabled = busy || !models.length;
+          }
+        }
+      }
+      async function generate(event) {
+        event.preventDefault();
+        if (busy) return;
+        clearError();
+        $('status').textContent = '';
+        const text = textPad.value, key = $('api-key').value.trim();
+        const model = customMode ? $('custom-model').value.trim() : modelSelect.value;
+        const modelName = customMode ? model : selectedModel()?.name ?? model;
+        const voice = $('speech-voice').value.trim();
+        if (!text.trim()) { showError('Add some text to the pad first.'); textPad.focus(); return; }
+        if (!key) { showError('Paste your OpenRouter API key to generate speech.'); $('api-key').focus(); return; }
+        if (/\s/.test(key)) { showError('Your API key contains spaces. Paste it again without spaces or line breaks.'); $('api-key').focus(); return; }
+        if (!model) { showError('Choose a speech model, or enter a model ID.'); return; }
+        if (isScribe(model)) { showError('Scribe transcribes audio into text. Choose a text-to-speech model to listen to your text.'); return; }
+        const controller = new AbortController();
+        generationController = controller;
+        const id = ++generationId;
+        setBusy(true);
+        $('status').textContent = 'Turning your words into audio. This may take a moment.';
+        try {
+          const response = await request(API + '/audio/speech', {
+            method: 'POST', signal: controller.signal,
+            headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json', Accept: 'audio/*', 'X-OpenRouter-Title': 'Speechy' },
+            body: JSON.stringify({ model, input: text, response_format: 'mp3', ...(voice ? { voice } : {}) })
+          });
+          if (!response.ok) throw await responseError(response, key);
+          const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+          if (type.includes('json')) throw await responseError(response, key);
+          if (type && !type.startsWith('audio/') && type !== 'application/octet-stream') throw new Error('OpenRouter returned an unexpected response instead of audio. Please try again.');
+          let blob = await response.blob();
+          if (!blob.size) throw new Error('OpenRouter returned an empty audio file. Please try again.');
+          if (!type.startsWith('audio/')) blob = new Blob([blob], { type: 'audio/mpeg' });
+          if (controller.signal.aborted || id !== generationId) return;
+          const previousUrl = audioUrl;
+          audioUrl = URL.createObjectURL(blob);
+          audio.pause();
+          audio.src = audioUrl;
+          audio.load();
+          if (previousUrl) URL.revokeObjectURL(previousUrl);
+          const format = blob.type.includes('wav') ? 'wav' : blob.type.includes('ogg') ? 'ogg' : blob.type.includes('aac') ? 'aac' : blob.type.includes('flac') ? 'flac' : 'mp3';
+          $('clip-model').textContent = modelName;
+          $('download-audio').href = audioUrl;
+          $('download-audio').download = 'speechy-audio.' + format;
+          $('empty-icon').hidden = $('empty-copy').hidden = $('empty-wave').hidden = true;
+          $('player-panel').classList.add('has-audio');
+          $('audio-player').hidden = false;
+          $('status').textContent = 'Your audio is ready.';
+          $('status').classList.add('visible');
+          audio.play().catch(() => { if (id === generationId) $('status').textContent = 'Your audio is ready. Press play to listen.'; });
+        } catch (error) {
+          if (!controller.signal.aborted && id === generationId) {
+            showError(error.message || 'Something went wrong. Please try again.');
+            $('status').textContent = '';
+          }
+        } finally { if (id === generationId) { generationController = null; setBusy(false); } }
+      }
+      try { textPad.value = localStorage.getItem(DRAFT_KEY) ?? ''; } catch { /* Local-file storage is optional. */ }
+      updateDraft();
+      textPad.addEventListener('input', updateDraft);
+      textPad.addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !busy) { event.preventDefault(); $('speech-form').requestSubmit(); } });
+      $('sample').addEventListener('click', () => { textPad.value = SAMPLE; updateDraft(); clearError(); textPad.focus(); });
+      $('clear').addEventListener('click', () => { textPad.value = ''; updateDraft(); clearError(); textPad.focus(); });
+      $('show-key').addEventListener('click', () => {
+        const shown = $('api-key').type === 'password';
+        $('api-key').type = shown ? 'text' : 'password';
+        $('show-key').setAttribute('aria-label', shown ? 'Hide API key' : 'Show API key');
+        $('show-key').setAttribute('aria-pressed', String(shown));
+      });
+      $('toggle-custom').addEventListener('click', () => {
+        customMode = !customMode;
+        modelSelect.hidden = customMode;
+        $('custom-model-field').hidden = !customMode;
+        $('toggle-custom').textContent = customMode ? 'Use model list' : 'Use model ID';
+        updateVoice();
+        if (customMode) $('custom-model').focus();
+      });
+      $('custom-model').addEventListener('input', updateVoice);
+      modelSelect.addEventListener('change', updateVoice);
+      $('retry-models').addEventListener('click', loadModels);
+      $('speech-form').addEventListener('submit', generate);
+      $('cancel').addEventListener('click', () => {
+        generationController?.abort();
+        generationController = null;
+        generationId += 1;
+        setBusy(false);
+        $('status').textContent = 'Generation cancelled. Your text is still here.';
+        $('status').classList.add('visible');
+      });
+      audio.addEventListener('error', () => { if (audioUrl && audio.error) showError('This browser could not play the audio. Try downloading it instead.'); });
+      window.addEventListener('pagehide', (event) => { if (!event.persisted) { catalogController?.abort(); generationController?.abort(); if (audioUrl) URL.revokeObjectURL(audioUrl); } });
+      void loadModels();
+    })();
+  </script>
+</body>
+</html>
