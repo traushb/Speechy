@@ -85,6 +85,11 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
 .catalog-error p { margin: 0 0 6px; font-size: 11px; line-height: 1.6; color: #966652; overflow-wrap: anywhere; }
 .catalog-error > div { display: flex; gap: 14px; }
 .generation-area { border-top: 1px solid #efebf3; padding-top: 22px; }
+.cost-estimate { margin-bottom: 16px; padding: 12px; background: #faf9fc; border: 1px solid #eeeaf3; border-radius: 8px; }
+.cost-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: #645a71; }
+#estimated-cost { font-weight: 650; color: #5944a1; }
+.cost-details { margin: 7px 0 0; font-size: 11px; line-height: 1.6; color: #706579; overflow-wrap: anywhere; }
+.cost-estimate a { display: inline-block; margin-top: 7px; color: #6f5e9b; font-size: 11px; }
 .generate-button { width: 100%; border: 1px solid #7562d9; color: #fff; background: var(--purple); height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; font-weight: 550; box-shadow: 0 3px 6px #7562d91a; transition: background .15s, transform .15s, box-shadow .15s; }
 .generate-button > svg:last-child { margin-left: auto; }
 .generate-button > svg:first-child { margin-right: 0; }
@@ -148,7 +153,7 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
           <div class="field api-key-field"><label for="api-key">OpenRouter API key</label><div class="input-with-action"><input id="api-key" type="password" placeholder="sk-or-v1-…" autocomplete="off" spellcheck="false" aria-describedby="key-help"><button type="button" class="icon-button" id="show-key" aria-label="Show API key" aria-pressed="false"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#eye-icon"/></svg></button></div><p id="key-help" class="field-help">Used for this session. Never saved.</p></div>
           <div class="field"><div class="field-label-row"><label for="speech-model">Speech model</label><button type="button" class="small-link" id="toggle-custom">Use model ID</button></div><select id="speech-model" disabled><option value="">Finding speech models…</option></select><div id="custom-model-field" hidden><label class="sr-only" for="custom-model">Model ID</label><input id="custom-model" placeholder="provider/text-to-speech-model" autocomplete="off" spellcheck="false"></div><div class="catalog-error" id="catalog-error" role="status" hidden><p id="catalog-message"></p><button type="button" class="small-link" id="retry-models">Retry</button></div><p class="field-help model-help">Choose a text-to-speech model. Scribe transcribes audio.</p></div>
           <div class="field voice-field"><label for="speech-voice">Voice</label><div id="voice-control"><input id="speech-voice" placeholder="Provider default" autocomplete="off" spellcheck="false"></div><p class="field-help" id="voice-help">Choose a voice for your words.</p></div>
-          <div class="generation-area"><button type="submit" class="generate-button" id="generate"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg><span id="generate-label">Generate speech</span><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#arrow-icon"/></svg></button><button type="button" class="text-button cancel-button" id="cancel" hidden>Cancel generation</button><p class="generation-note" id="usage-note">Uses your OpenRouter credits.</p><div class="generation-error" id="generation-error" role="alert" hidden></div><p class="generation-status" id="status" role="status" aria-live="polite"></p></div>
+          <div class="generation-area"><div class="cost-estimate"><div class="cost-row"><span>Estimated cost</span><span id="estimated-cost" aria-live="polite" aria-describedby="cost-details">Loading pricing…</span></div><p class="cost-details" id="cost-details">Uses the selected model’s current OpenRouter rates.</p><a id="pricing-link" target="_blank" rel="noreferrer" hidden>View model pricing</a></div><button type="submit" class="generate-button" id="generate"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#headphones-icon"/></svg><span id="generate-label">Generate speech</span><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><use href="#arrow-icon"/></svg></button><button type="button" class="text-button cancel-button" id="cancel" hidden>Cancel generation</button><p class="generation-note" id="usage-note">Uses your OpenRouter credits.</p><div class="generation-error" id="generation-error" role="alert" hidden></div><p class="generation-status" id="status" role="status" aria-live="polite"></p></div>
         </aside>
       </form>
       <div class="below-workspace"><p>Your key stays in memory. Your text goes to OpenRouter only when you generate.</p><span>Words in. World out.</span></div>
@@ -172,17 +177,71 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
       const isRecord = (value) => typeof value === 'object' && value !== null;
       const strings = (value) => Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.length) : [];
       const isScribe = (model) => /(?:^|\/)scribe(?:[-_]|$)/i.test(model);
+      const characterCount = (text) => Array.from(text).length;
+      const usd = (amount) => '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      function pricingRate(value) {
+        if ((typeof value !== 'string' && typeof value !== 'number') || (typeof value === 'string' && !value.trim())) return null;
+        const rate = Number(value);
+        return Number.isFinite(rate) && rate >= 0 ? rate : null;
+      }
+
+      function updateCost() {
+        const id = customMode ? $('custom-model').value.trim() : modelSelect.value;
+        const model = models.find((item) => item.id === id);
+        const amount = $('estimated-cost'), details = $('cost-details'), link = $('pricing-link');
+        link.hidden = true;
+        const unavailable = (message) => {
+          amount.textContent = 'Unavailable';
+          details.textContent = message;
+          link.href = 'https://openrouter.ai/' + (model ? model.id.split('/').map(encodeURIComponent).join('/') : 'models');
+          link.hidden = false;
+        };
+        if (!model) {
+          if (catalogLoading && !customMode) { amount.textContent = 'Loading pricing…'; details.textContent = 'Uses the selected model’s current OpenRouter rates.'; }
+          else unavailable(customMode ? 'Pricing is unavailable for this model ID. Choose a model from the loaded list to estimate its cost.' : 'Choose a model with published pricing to estimate its cost.');
+          return;
+        }
+        const pricing = model.pricing;
+        if (!isRecord(pricing)) { unavailable('OpenRouter has not provided pricing for this model.'); return; }
+        const prompt = pricingRate(pricing.prompt), completion = pricingRate(pricing.completion);
+        const fixed = pricing.request === undefined ? 0 : pricingRate(pricing.request);
+        const otherCharges = Object.entries(pricing).some(([key, value]) => !['prompt', 'completion', 'request', 'discount'].includes(key) && pricingRate(value) > 0);
+        if (prompt === null || completion === null || fixed === null || otherCharges) { unavailable('This model’s full pricing is unavailable. Check its published rates before generating.'); return; }
+        if (model.id.startsWith('google/gemini') && (prompt > 0 || completion > 0)) {
+          unavailable('Billed by text and audio tokens. The total depends on generated audio, so a reliable estimate is unavailable.');
+          return;
+        }
+        const text = textPad.value;
+        let cost, basis;
+        if (completion === 0) {
+          const characters = characterCount(text);
+          cost = characters * prompt + fixed;
+          const rate = '$' + (prompt * 1000).toLocaleString('en-US', { maximumFractionDigits: 6 });
+          basis = characters.toLocaleString() + ' characters · ' + rate + ' per 1,000 characters';
+        } else if (model.id === 'bytedance-seed/seed-audio-1-0' && prompt === 0) {
+          const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+          const seconds = Math.max(1, words * 60 / 150);
+          cost = seconds * completion + fixed;
+          basis = '~' + Math.ceil(seconds).toLocaleString() + ' seconds of audio at 150 words/min. Actual duration may vary';
+        } else { unavailable('This model charges for generated audio. Its billing units cannot be estimated reliably from this text.'); return; }
+        if (!text.trim()) { amount.textContent = '$0.0000 USD'; details.textContent = 'Add text to estimate this generation.'; return; }
+        if (!Number.isFinite(cost)) { unavailable('This text is too large to estimate its cost.'); return; }
+        amount.textContent = cost > 0 && cost < 0.0001 ? '< $0.0001 USD' : '~ ' + usd(cost) + ' USD';
+        if (fixed > 0) basis += ' + ' + usd(fixed) + ' per request';
+        details.textContent = basis + '. Published rates; actual charges may vary.';
+      }
 
       function updateDraft() {
         const text = textPad.value;
         const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-        $('counts').textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words') + ' · ' + text.length.toLocaleString() + ' characters';
+        $('counts').textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words') + ' · ' + characterCount(text).toLocaleString() + ' characters';
         $('clear').disabled = !text;
         try {
           if (text) localStorage.setItem(DRAFT_KEY, text);
           else localStorage.removeItem(DRAFT_KEY);
           $('draft-status').textContent = 'Draft saved on this device';
         } catch { $('draft-status').textContent = 'Draft saving unavailable'; }
+        updateCost();
       }
       function clearError() { $('generation-error').hidden = true; $('generation-error').textContent = ''; }
       function showError(message) { $('generation-error').textContent = message; $('generation-error').hidden = false; }
@@ -197,6 +256,7 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
         control.disabled = busy;
         $('voice-control').replaceChildren(control);
         $('voice-help').textContent = voices.length ? 'Find a voice you’ll want to keep listening to.' : 'Optional. Enter a voice supported by your model.';
+        updateCost();
       }
       function setBusy(value) {
         busy = value;
@@ -249,12 +309,13 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
         $('retry-models').disabled = true;
         modelSelect.disabled = true;
         if (!models.length) modelSelect.replaceChildren(new Option('Finding speech models…', ''));
+        updateCost();
         try {
           const response = await request(API + '/models?output_modalities=speech', { signal: controller.signal });
           if (!response.ok) throw await responseError(response);
           const body = await response.json();
           if (!isRecord(body) || !Array.isArray(body.data)) throw new Error('OpenRouter returned an invalid model list. Please retry.');
-          const available = body.data.filter((item) => isRecord(item) && typeof item.id === 'string' && item.id && !isScribe(item.id) && isRecord(item.architecture) && strings(item.architecture.input_modalities).includes('text') && strings(item.architecture.output_modalities).includes('speech')).map((item) => ({ id: item.id, name: typeof item.name === 'string' && item.name ? item.name : item.id, voices: [...new Set(strings(item.supported_voices))] }));
+          const available = body.data.filter((item) => isRecord(item) && typeof item.id === 'string' && item.id && !isScribe(item.id) && isRecord(item.architecture) && strings(item.architecture.input_modalities).includes('text') && strings(item.architecture.output_modalities).includes('speech')).map((item) => ({ id: item.id, name: typeof item.name === 'string' && item.name ? item.name : item.id, voices: [...new Set(strings(item.supported_voices))], pricing: item.pricing }));
           available.sort((a, b) => Number(b.id.startsWith('elevenlabs/')) - Number(a.id.startsWith('elevenlabs/')));
           if (!available.length) throw new Error('No text-to-speech models are available right now. Retry or use a supported model ID.');
           if (controller.signal.aborted) return;
@@ -273,6 +334,7 @@ select:disabled { color: #a59daf; background-color: #faf9fc; cursor: default; }
             catalogLoading = false;
             $('retry-models').disabled = false;
             modelSelect.disabled = busy || !models.length;
+            updateCost();
           }
         }
       }
